@@ -1,0 +1,464 @@
+openapi: "3.0.4"
+
+info:
+  title: Swagger WarmHouse - OpenAPI 3.0
+  description: |-
+    API для управления датчиками и устройствами умного дома для WarmHouse
+  version: 1.0.0
+
+tags:
+  - name: sensor
+    description: Managing sensors
+  - name: device
+    description: Managing devices
+
+paths:
+  /api/v1.0/home/{homeId}/sensors:
+    parameters:
+      - name: homeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+    get:
+      tags:
+        - sensor
+      summary: Get all registered sensors belonging to particular home
+      description: Get all registered sensors belonging to particular home
+      operationId: getSensorsForHome
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          description: Home not found
+        default:
+          description: Unexpected error
+      security:
+        - warmhouse_auth:
+            - read:sensors
+            - read:homes
+    put:
+      tags:
+        - sensor
+      summary: Register new sensor.
+      description: Register new sensor at particular home to WarmHouse system.
+      operationId: addSensor
+      requestBody:
+        description: Add new sensor at particular home
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sensor'
+        required: true
+      responses:
+        '201':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '400':
+          description: Invalid Sensor Info supplied
+        '404':
+          description: Home not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - write:sensors
+            - write:homes
+  /api/v1.0/home/{homeId}/sensors/{sensorId}:
+    parameters:
+      - name: homeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+      - name: sensorId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+    get:
+      tags:
+        - sensor
+      summary: Get Sensor State
+      description: Get sensor status and indications.
+      operationId: getSensorState
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          description: Sensor not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+          - read:sensors
+          - read:homes
+    post:
+      tags:
+        - sensor
+      summary: Send command to sensor.
+      description: Send command to particular sensor of particular home.
+      operationId: adjustSensor
+      requestBody:
+        description: Send command to sensor
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sensor'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          description: Sensor not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - write:sensors
+            - read:homes
+    delete:
+      tags:
+        - sensor
+      summary: Remove sensor from home.
+      description: This can only be done by the logged in user.
+      operationId: removeSensor
+      responses:
+        '200':
+          description: Sensor removed
+        '404':
+          description: Home not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+          - write:sensors
+          - write:homes
+  /api/v1.0/home/{homeId}/devices:
+    parameters:
+      - name: homeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+    get:
+      tags:
+        - device
+      summary: Get all registered devices belonging to particular home
+      description: Get all registered devices belonging to particular home
+      operationId: getDevicesForHome
+      requestBody:
+        description: Get all registered devices belonging to particular home
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          description: Home not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - read:devices
+            - read:homes
+    put:
+      tags:
+        - device
+      summary: Register new device.
+      description: Add new device at particular home to WarmHouse system.
+      operationId: addDevice
+      requestBody:
+        description: Add new device at particular home
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          description: Home not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - petstore_auth:
+            - write:devices
+            - write:homes
+  /api/v1.0/home/{homeId}/devices/{deviceId}:
+    parameters:
+      - name: homeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+      - name: deviceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: UUID
+    get:
+      tags:
+        - device
+      summary: Get Device State
+      description: Get device status and indications.
+      operationId: getDeviceState
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          description: Device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - read:devices
+            - read:homes
+    post:
+      tags:
+        - device
+      summary: Send command to device.
+      description: Send command to particular device of particular home.
+      operationId: adjustDevice
+      requestBody:
+        description: Send command to device
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '404':
+          description: Device not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - write:devices
+            - read:homes
+    delete:
+      tags:
+        - device
+      summary: Remove device from home.
+      description: This can only be done by the logged in user.
+      operationId: removeDevice
+      responses:
+        '200':
+          description: Device deleted
+        '404':
+          description: Home not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - warmhouse_auth:
+            - write:devices
+            - read:homes
+
+components:
+  schemas:
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          format: UUID
+          example: dfdsfd-fdsfdsf-dsfdsffs-sdfdsfd
+        name:
+          type: string
+          example: Heater in bedroom
+        type:
+          type: string
+          enum:
+            - heater
+            - light
+            - gates
+            - camera
+        status:
+          type: string
+          enum:
+            - on
+            - off
+            - failure
+            - no_connection
+        indicators:
+            type: array
+            items:
+              $ref: '#/components/schemas/Indicator'
+    Indicator:
+      type: object
+      properties:
+        name:
+          type: string
+        telemetry:
+          type: array
+          items:
+            $ref: '#/components/schemas/Telemetry'
+    Telemetry:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: strng
+
+    Sensor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: UUID
+          example: dfdsfd-fdsfdsf-dsfdsffs-sdfdsfd
+        name:
+          type: string
+          example: Temperature sensor in bedroom
+        type:
+          type: string
+          enum:
+            - temperature
+            - humidity
+            - movement
+            - smoke
+        status:
+          type: string
+          enum:
+            - on
+            - off
+            - failure
+            - no_connection
+        indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/Indicator'
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  requestBodies:
+    Device:
+      description: Pet object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Device'
+  securitySchemes:
+    warmhouse_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://warmhouse.swagger.io/oauth/authorize
+          scopes:
+            "read:homes": read your homes
+            "write:homes": modify your homes
+            "read:sensors": read your devices
+            "write:sensors": modify sensors in your account
+            "read:devices": read your sensors
+            "write:devices": modify devices in your account
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header

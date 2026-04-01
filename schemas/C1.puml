@@ -1,0 +1,19 @@
+@startuml
+!include <C4/C4_Context>
+
+title WarmHouse Context Diagram
+
+Person(Customer, "WarmHouse Customer", "A customer of the WarmHouse with smart home with sensors and heaters.")
+
+System_Boundary(c1, "WarmHouse") {
+    System(WarmHouseSystem, "WarmHouse System", "System managing equipment")
+}
+
+System_Ext(CustomerHome, "Customer Home", "Homes of customers with equipment plugged into WarmHouse System")
+
+Rel(Customer, WarmHouseSystem, "Uses")
+Rel(Customer, CustomerHome, "Sets up equipment")
+Rel(WarmHouseSystem, CustomerHome, "Manages")
+Rel(CustomerHome, WarmHouseSystem, "Sends telemetry updates")
+
+@enduml

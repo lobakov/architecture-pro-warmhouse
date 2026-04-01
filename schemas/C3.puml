@@ -1,0 +1,101 @@
+@startuml
+!include <C4/C4_Component>
+
+title WarmHouse Container Diagram
+
+Component(MobileApp, "Mobile Application", "Xamarin", "Allows user to manage membership, sensors and devices")
+Component(WebApp, "Web Application", "JavaScript, TypeScript, React", "Allows user to manage membership, sensors and devices")
+Component(MessageBroker, "Message Broker", "Kafka/Rabbit/Jms", "Brokering messaging")
+Component(BFF, "Back for front", "Nginx", "Composes data from applications")
+ComponentDb(Cache, "Redis cache", "Redis", "Caches reusable data for user")
+
+Container_Boundary(c0, "User Account Application") {
+    Component(SignUpController, "Sign Up Controller", "Sring MVC Controller", "Allows new user to sign up")
+    Component(SignInController, "Sign In Controller", "Sring MVC Controller", "Allows existing user to sign in")
+    Component(UserInfoController, "User Info Controller", "Sring MVC Controller", "Allows existing user to manage their personal data")
+    Component(MembershipController, "Membership Controller", "Sring MVC Controller", "Allows existing user to manage their membership")
+    Component(AccountDAOLayer, "DAOLayer", "Spring JDBC", "Manages user data")
+}
+
+ComponentDb(UserAccountDb, "User Account DB", "Postgres", "Storing user data")
+
+Container_Boundary(c1, "Sensors Application") {
+    Component(SensorTelemetryController, "Telemetry Controller", "GRPC Service", "Sensors send their telemetry data")
+    Component(SensorTelemetryService, "Telemetry Service", "Spring Bean", "Manages Telemetry Data")
+    Component(SensorManagementController, "Sensor Management Controller", "Spring MVC Controller", "Accepts management commands from user")
+    Component(SensorManagementService, "Sensor Management Service", "Spring Bean", "Allows user to manage sensors")
+    Component(SensorManagementClient, "Sensor Management Client", "GRPC Client", "Sends management commands to sensors")
+    Component(SensorEventsProducer, "Events Producer Service", "Kafka/Rabbit/Jms Producer", "Sends events caused by sensors telemetry")
+    Component(SensorNotificationsProducer, "Notifications Producer Service", "Kafka/Rabbit/Jms Producer", "Sends notifications caused by sensors telemetry")
+    Component(SensorsDAOLayer, "DAOLayer", "Spring JDBC", "Manages sensors data")
+}
+
+ContainerDb(SensorsDb, "Sensors DB", "Postgres", "Storing sensors data")
+
+Container_Boundary(c2, "Devices Application") {
+    Component(DeviceTelemetryController, "Telemetry Controller", "GRPC Service", "Devices send their telemetry data")
+    Component(DeviceTelemetryService, "Telemetry Service", "Spring Bean", "Manages Telemetry Data")
+    Component(DeviceManagementController, "Device Management Controller", "Spring MVC Controller", "Accepts management commands from user")
+    Component(DeviceManagementService, "Device Management Service", "Spring Bean", "Allows user to manage devices")
+    Component(DeviceManagementClient, "Device Management Client", "GRPC Client", "Sends management commands to devices")
+    Component(SensorEventsConsumer, "Events Consumer Service", "Kafka/Rabbit/Jms Consumer", "Processes events from sensors")
+    Component(DeviceNotificationsProducer, "Notifications Producer Service", "Kafka/Rabbit/Jms Producer", "Sends notifications caused by devices telemetry or events")
+    Component(DevicesDAOLayer, "DAOLayer", "Spring JDBC", "Manages devices data")
+}
+
+ContainerDb(DevicesDb, "Devices DB", "Postgres", "Storing devices data")
+
+Container_Boundary(c3, "Notifications Application") {
+    Component(NotificationsConsumer, "Notification Consumer Service", "Kafka/Rabbit/Jms Consumer", "Processes notifications from services")
+    Component(WebNotificationsController, "Web Notifications Controller", "Spring MVC Controller with SSE", "Allows web application gather web notifications for user")
+    Component(SmsGatewayClient, "Sms Gateway Client", "Spring Rest Client", "Sends SMS with notifications to user through SMS Gateway")
+    Component(PushNotificationsClient, "Push Notifications Client", "Firebase client", "Sends push notifications to mobile app")
+}
+
+System_Boundary(c4, "Customer Home") {
+    Container_Ext(Sensors, "Sensors", "sensor", "Customer's Sensors")
+    Container_Ext(Devices, "Devices", "device", "Customer's Devices")
+}
+
+System_Ext(SmsGateway, "SMS Gateway", "Service for SMS notifications")
+System_Ext(FirebaseCloud, "Firebase Cloud", "Service for PUSH notifications")
+
+Rel(SensorEventsProducer, MessageBroker, "Sends events caused by sensors telemetry")
+Rel(SensorNotificationsProducer, MessageBroker, "Sends notifications caused by sensors telemetry")
+Rel(DeviceNotificationsProducer, MessageBroker, "Sends notifications caused by devices telemetry or events")
+Rel(MessageBroker, SensorEventsConsumer, "Directs sensor events to Devices application")
+Rel(MessageBroker, NotificationsConsumer, "Directs notifications to Notifications application")
+
+Rel(MobileApp, BFF, "Interfaces with system", "HTTPS")
+Rel(WebApp, BFF, "Interfaces with system", "HTTPS")
+
+Rel(BFF, Cache, "Caches responses")
+
+Rel(BFF, SignUpController, "Signs up", "HTTPS")
+Rel(BFF, SignInController, "Signs in", "HTTPS")
+Rel(BFF, UserInfoController, "Manages user info", "HTTPS")
+Rel(BFF, MembershipController, "Manages membership", "HTTPS")
+Rel(BFF, SensorManagementController, "Manages sensors", "HTTPS")
+Rel(BFF, DeviceManagementController, "Manages devices", "HTTPS")
+
+Rel(BFF, SignUpController, "Signs up", "HTTPS")
+Rel(BFF, SignInController, "Signs in", "HTTPS")
+Rel(BFF, UserInfoController, "Manages user info", "HTTPS")
+Rel(BFF, MembershipController, "Manages membership", "HTTPS")
+Rel(BFF, SensorManagementController, "Manages sensors", "HTTPS")
+Rel(BFF, DeviceManagementController, "Manages devices", "HTTPS")
+Rel(BFF, WebNotificationsController, "Receives Web Notifications", "HTTPS")
+
+Rel(SmsGatewayClient, SmsGateway, "Sends SMS notifications")
+Rel(PushNotificationsClient, FirebaseCloud, "Sends PUSH notifications")
+
+Rel(Sensors, SensorTelemetryController, "Registers, Sends telemetry updates", "GRPC")
+Rel(SensorManagementClient, Sensors, "Sends management commands", "GRPC")
+Rel(Devices, DeviceTelemetryController, "Registers, Sends telemetry updates", "GRPC")
+Rel(DeviceManagementClient, Devices, "Sends management commands", "GRPC")
+
+Rel(AccountDAOLayer, UserAccountDb, "Stores User Account Data", "Spring JDBC")
+Rel(SensorsDAOLayer, SensorsDb, "Stores Sensors Data", "Spring JDBC")
+Rel(DevicesDAOLayer, DevicesDb, "Stores Devices Data", "Spring JDBC")
+
+@enduml
