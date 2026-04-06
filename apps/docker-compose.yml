@@ -4,10 +4,43 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: smarthome-postgres
-  ## тут нужно добавить настройки
+    environment:
+      - POSTGRES_DB=smarthome
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./smart_home/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smarthome-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d smarthome" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   temperature-api:
-  ## тут нужно добавить приложение
+    build:
+      context: ./temperature-api
+      dockerfile: Dockerfile
+    container_name: temperature_api
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/smarthome
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - JAVA_OPTS="-Xmx512m -Xms256m"
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - smarthome-network
+    restart: unless-stopped
 
   app:
     build:
