@@ -5,6 +5,6 @@ WORKDIR /app
 # Copy your fat JAR
 COPY build/libs/*.jar app.jar
 
-EXPOSE 8081
+EXPOSE 8082
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

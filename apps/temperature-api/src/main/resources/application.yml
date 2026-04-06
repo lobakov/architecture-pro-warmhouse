@@ -5,7 +5,7 @@ spring:
   application:
     name: temperature-api
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/sensor_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smarthome}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smarthome-postgres
+    environment:
+      - POSTGRES_DB=smarthome
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+    volumes:
+      - apps_postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - apps_smarthome-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d smarthome" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  temperature-api:
+    build:
+      context: ../temperature-api
+      dockerfile: Dockerfile
+    container_name: temperature_api
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/smarthome
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - JAVA_OPTS="-Xmx512m -Xms256m"
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apps_smarthome-network
+    restart: unless-stopped
+
+  legacy-app:
+    build:
+      context: ../smart_home
+      dockerfile: Dockerfile
+    container_name: smarthome-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temperature-api:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
+      - TEMPERATURE_API_URL=http://temperature-api:8081
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - apps_smarthome-network
+
+  sensors:
+    build:
+      context: ./sensors
+      dockerfile: Dockerfile
+    container_name: sensors-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temperature-api:
+        condition: service_started
+      legacy-app:
+        condition: service_started
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/smarthome
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - LEGACY_TEMPERATURE_API_URL=http://temperature-api:8081
+      - JAVA_OPTS="-Xmx512m -Xms256m"
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    networks:
+      - apps_smarthome-network
+
+volumes:
+  apps_postgres_data:
+
+networks:
+  apps_smarthome-network:
+    driver: bridge
