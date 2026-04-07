@@ -17,7 +17,7 @@ COPY . /build
 RUN gradle build
 
 RUN mkdir -p /app
-COPY build/libs/*.jar /app/app.jar
+COPY /build/build/libs/*.jar /app/app.jar
 
 WORKDIR /app
 
