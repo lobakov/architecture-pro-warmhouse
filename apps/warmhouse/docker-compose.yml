@@ -12,10 +12,10 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./smart_home/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - apps_postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - smarthome-network
+      - apps_smarthome-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d smarthome" ]
       interval: 10s
@@ -25,7 +25,7 @@ services:
 
   temperature-api:
     build:
-      context: ./temperature-api
+      context: ../temperature-api
       dockerfile: Dockerfile
     container_name: temperature_api
     environment:
@@ -39,12 +39,12 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - smarthome-network
+      - apps_smarthome-network
     restart: unless-stopped
 
-  app:
+  legacy-app:
     build:
-      context: ./smart_home
+      context: ../smart_home
       dockerfile: Dockerfile
     container_name: smarthome-app
     depends_on:
@@ -59,11 +59,35 @@ services:
       - "8080:8080"
     restart: unless-stopped
     networks:
-      - smarthome-network
+      - apps_smarthome-network
+
+  sensors:
+    build:
+      context: ./sensors
+      dockerfile: Dockerfile
+    container_name: sensors-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temperature-api:
+        condition: service_started
+      legacy-app:
+        condition: service_started
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/smarthome
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - LEGACY_TEMPERATURE_API_URL=http://temperature-api:8081
+      - JAVA_OPTS="-Xmx512m -Xms256m"
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    networks:
+      - apps_smarthome-network
 
 volumes:
-  postgres_data:
+  apps_postgres_data:
 
 networks:
-  smarthome-network:
+  apps_smarthome-network:
     driver: bridge

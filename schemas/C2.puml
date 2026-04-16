@@ -1,0 +1,69 @@
+@startuml
+!include <C4/C4_Container>
+
+title WarmHouse Container Diagram
+
+Container_Boundary(c1, "WarmHouse") {
+    Person(TechSupport, "Tech Support", "Employee for customers tech support")
+    Container(SensorsApi, "Sensors Application", "Java and Spring MVC", "Managing sensors")
+    ContainerDb(SensorsDb, "Sensors DB", "Postgres", "Storing sensors data")
+    Container(DevicesApi, "Devices Application", "Java and Spring MVC", "Managing devices")
+    ContainerDb(DevicesDb, "Devices DB", "Postgres", "Storing devices data")
+    Container(MessageBroker, "Message Broker", "Kafka, RabbitMQ, Jms", "Enables message brokering between services")
+    Container(MobileApp, "Mobile Application", "Xamarin", "Allows user to manage sensors and devices")
+    Container(WebApp, "Web Application", "JavaScript, TypeScript, React", "Allows user to manage sensors and devices")
+    Container(TechSupportApp, "Tech Support App", "Python, Django", "Tech support exchange")
+    ContainerDb(TechSupportDb, "TechSupport DB", "Postgres", "Storing tech support data")
+    Container(Notifications, "Notifications Application", "Java and Spring MVC", "Sends notifications")
+}
+
+Person(Customer, "WarmHouse Customer", "A customer of the WarmHouse with smart home with sensors and heaters.")
+
+Container_Boundary(c2, "Customer Home") {
+    Container_Ext(Sensors, "Sensors", "sensor", "Customer's Sensors")
+    Container_Ext(Devices, "Devices", "device", "Customer's Devices")
+}
+
+System_Ext(SmsGateway, "SMS Gateway", "Service for SMS notifications")
+
+Rel(Customer, WebApp, "Requests Tech Support")
+Rel(Customer, MobileApp, "Requests Tech Support")
+Rel(Customer, Sensors, "Sets up")
+Rel(Customer, Devices, "Sets up")
+Rel(Customer, MobileApp, "Manages sensors and devices", "HTTPS")
+Rel(Customer, WebApp, "Manages sensors and devices", "HTTPS")
+
+Rel(Sensors, SensorsApi, "Registers, Sends telemetry updates", "GRPC")
+Rel(Devices, DevicesApi, "Registers, Sends telemetry updates", "GRPC")
+
+Rel(SensorsApi, Sensors, "Manages", "GRPC")
+Rel(SensorsApi, SensorsDb, "Stores sensors data")
+Rel(SensorsApi, MessageBroker, "Sends events, notifications")
+
+Rel(DevicesApi, Devices, "Manages", "GRPC")
+Rel(DevicesApi, DevicesDb, "Stores devices data")
+Rel(DevicesApi, MessageBroker, "Sends notifications")
+
+Rel(MessageBroker, DevicesApi, "Sends events")
+Rel(MessageBroker, Notifications, "Notifies customer")
+
+Rel(MobileApp, SensorsApi, "Manages sensors", "HTTPS")
+Rel(MobileApp, DevicesApi, "Manages devices", "HTTPS")
+Rel(MobileApp, Customer, "Shows PUSH notifications")
+Rel(MobileApp, TechSupportApp, "Requests Tech Support")
+
+Rel(WebApp, SensorsApi, "Manages sensors", "HTTPS")
+Rel(WebApp, DevicesApi, "Manages devices", "HTTPS")
+Rel(WebApp, Customer, "Online notifications")
+Rel(WebApp, TechSupportApp, "Requests Tech Support")
+
+Rel(TechSupport, TechSupportApp, "Resolves problems")
+Rel(TechSupportApp, TechSupport, "Tech Support Request")
+Rel(TechSupportApp, TechSupportDb, "Store TechSupport data")
+
+Rel(SmsGateway, Customer, "Sends SMS Notifications")
+Rel(Notifications, SmsGateway, "Sends SMS notifications")
+Rel(Notifications, WebApp, "Sends Online notifications")
+Rel(Notifications, MobileApp, "Sends PUSH notifications")
+
+@enduml

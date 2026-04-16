@@ -1,0 +1,87 @@
+@startuml
+
+enum State {
+    OFF
+    ON
+    FAILURE
+}
+
+enum SensorType {
+    Temperature
+    Humidity
+    Movement
+    Noise
+    Co2
+    Smoke
+}
+
+enum DeviceType {
+    Heater
+    Conditioning
+    Gate
+    Camera
+    Light
+}
+
+class Home {
+    +UUID id
+    +String name
+    +Address address
+    +List<Sensor> sensors
+    +List<Device> devices
+    +List<Sensor> getAllSensors()
+    +Sensor getSensorById(UUID)
+    +List<Device> getAllDevices()
+    +Device getDeviceById(UUID)
+}
+
+class Customer {
+    +UUID uid
+    +String name
+    +String email
+    +String phone
+    +void signUp()
+    +void signIn()
+    +void addHome()
+    +List<Home> getAllHomes()
+    +Home getHomeById(UUID)
+}
+
+class Membership {
+    +MembershipType type
+    +MembershipStatus status
+    +Date validUntil
+}
+
+class Sensor {
+    +UUID id
+    +String name
+    +SensorType type
+    +State state
+    +void turnOn()
+    +void turnOff()
+    +void register()
+    +void remove()
+    +boolean adjustParameter(Parameter, Value)
+    +Map<Parameter, Value> getReadings()
+}
+
+class Device {
+    +UUID id
+    +String name
+    +DeviceType type
+    +State state
+    +void turnOn()
+    +void turnOff()
+    +void register()
+    +void remove()
+    +boolean adjustParameter(Parameter, Value)
+    +Map<Parameter, Value> getReadings()
+}
+
+Customer "1" -- "0..*" Home: has
+Home "1" -- "0..*" Sensor: has
+Home "1" -- "0..*" Device: has
+Customer "1" -- "1" Membership: has
+
+@enduml

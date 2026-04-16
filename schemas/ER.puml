@@ -1,0 +1,159 @@
+@startuml
+skinparam linetype ortho
+
+entity "Customer" as customer {
+  * id: number
+  --
+  name: text
+  last_name: text
+  phone: text
+}
+
+entity "Membership" as membership {
+  * id: number
+  --
+  * customer_id: number <<FK>>
+  * membership_type_id: number <<FK>>
+  * membership_status_id: number <<FK>>
+  validUntil: timestamp
+}
+
+entity "Membership Type" as membership_type {
+    *id: number
+    --
+    type: text
+}
+
+entity "Membership Status" as membership_status {
+    *id: number
+    --
+    status: text
+}
+
+entity "Home" as home {
+  * id : UUID
+  --
+  name : text
+}
+
+entity "Address" as address {
+  *id: number
+  --
+  *home_id: UUID <<FK>>
+  city: text
+  street: text
+  house: text
+  apartment: text
+}
+
+entity "Sensor" as sensor {
+  * id : UUID
+  --
+  name: text
+  * home_id: UUID <<FK>>
+  * sensor_type_id: number <<FK>>
+  * sensor_status_id: number <<FK>>
+}
+
+entity "Sensor Type" as sensor_type {
+    *id: number
+    --
+    type: text
+}
+
+entity "Sensor Status" as sensor_status {
+    *id: number
+    --
+    status: text
+}
+
+entity "Sensor Command" as sensor_command {
+  *id: number
+  --
+  *sensor_type_id: number <<FK>>
+  command: text
+  value: text
+}
+
+entity "Sensor Indicator" as sensor_indicator {
+  *id: number
+  --
+  *sensor_id: UUID <<FK>>
+  *sensor_type_id: number <<FK>>
+  name: text
+}
+
+entity "Sensor Telemetry" as sensor_telemetry {
+    *id: number
+    --
+    *sensor_indicator_id: number <<FK>>
+    value: text
+    timestamp: timestamp
+}
+
+entity "Device" as device {
+  * id : UUID
+  --
+  name: text
+  * home_id: UUID <<FK>>
+  * device_type_id: number <<FK>>
+  * device_status_id: number <<FK>>
+}
+
+entity "Device Type" as device_type {
+    *id: number
+    --
+    type: text
+}
+
+entity "Device Status" as device_status {
+    *id: number
+    --
+    status: text
+}
+
+entity "Device Command" as device_command {
+  *id: number
+  --
+  *device_type_id: number <<FK>>
+  command: text
+  value: text
+}
+
+entity "Device Indicator" as device_indicator {
+  *id: number
+  --
+  *device_id: UUID <<FK>>
+  *device_type_id: number <<FK>>
+  name: text
+}
+
+entity "Device Telemetry" as device_telemetry {
+    *id: number
+    --
+    *device_indicator_id: number <<FK>>
+    value: text
+    timestamp: timestamp
+}
+
+customer ||--o{ home: "has"
+customer ||--|| membership: "has"
+membership ||--|| membership_type: "is of"
+membership ||--|| membership_status: "is in"
+home ||--|| address: "has"
+home ||--o{ sensor: "contains"
+home ||--o{ device: "contains"
+sensor ||--|| sensor_type: "is of"
+sensor ||--|| sensor_status: "is in"
+sensor ||--o{ sensor_indicator: "has"
+device ||--|| device_type: "is of"
+device ||--|| device_status: "is in"
+device ||--o{ device_indicator: "has"
+sensor_type ||--o{ sensor_command: "supports"
+sensor_type ||--o{ sensor_indicator: "supports"
+sensor_indicator }|--o{ sensor_telemetry: "writes"
+device_type ||--o{ device_command: "supports"
+device_type ||--o{ device_indicator: "supports"
+device_indicator }|--o{ device_telemetry: "writes"
+
+@enduml

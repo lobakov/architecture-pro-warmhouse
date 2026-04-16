@@ -1,0 +1,14 @@
+package com.github.lobakov.architecture.sprint.one.sensors.model.dto
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY
+import com.fasterxml.jackson.annotation.JsonProperty
+
+@JsonInclude(NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class SensorTelemetryUpdate(
+    @field:JsonProperty("indicator_name")
+    val indicatorName: String,
+    val value: String
+)
